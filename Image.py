@@ -87,10 +87,24 @@ class MoodApp(QWidget):
 
         # Add the question label at the top
         self.question_label = QLabel("Quin és el teu mood malaki d'avui?", self)
-        self.question_label.setStyleSheet("font-size: 24px; font-weight: bold; text-align: center; color: #2d2d2d;")
+        self.question_label.setStyleSheet("font-size: 60px; font-weight: bold; text-align: center; color: #2d2d2d;")
         self.question_label.setAlignment(Qt.AlignCenter)
         self.question_layout.addWidget(self.question_label)
 
+        # Add an image under the question label
+        self.image_label = QLabel(self)
+        image_path = resource_path("Icona-removebg-preview.png")  # Provide the path to the image
+        pixmap = QPixmap(image_path)
+
+        # Resize image to fit within a suitable size (optional)
+        pixmap = pixmap.scaled(400, 400, Qt.KeepAspectRatio)  # Adjust width and height as needed
+
+        self.image_label.setPixmap(pixmap)
+        self.image_label.setAlignment(Qt.AlignCenter)  # Center the image
+        self.question_layout.addWidget(self.image_label)
+
+        # Add the grid layout of radio buttons to the question layout
+        self.question_page.setLayout(self.question_layout)
 
         # Create a container layout for the radio buttons (below the question)
         self.radio_layout = QGridLayout()  # Use QGridLayout instead of QVBoxLayout
@@ -104,7 +118,33 @@ class MoodApp(QWidget):
         col = 0
         for mood in images.keys():
             radio_button = QRadioButton(mood)
-            radio_button.setStyleSheet("font-size: 20px; padding: 12px; margin: 10px; color: #2d2d2d;")
+
+            # Custom styling to make the radio button a square with the mood text inside
+            radio_button.setStyleSheet("""
+                QRadioButton {
+                    font-size: 20px;
+                    color: #2d2d2d;
+                    background-color: #e0e0e0;  /* Light background for the button */
+                    border: 3px solid #2d2d2d;  /* Dark border for square shape */
+                    border-radius: 10px;  /* Optional rounded corners */
+                    padding: 10px;
+                    width: 120px;
+                    height: 120px;
+                    text-align: center;
+                    display: flex;
+                    justify-content: center;  /* Horizontally center the text */
+                    align-items: center;  /* Vertically center the text */
+                }
+                QRadioButton::indicator {
+                    width: 0px;
+                    height: 0px;
+                }
+                QRadioButton:checked {
+                    background-color: #4CAF50;  /* Green when selected */
+                    border-color: #388E3C;  /* Darker green when selected */
+                }
+            """)
+            radio_button.setFixedSize(400, 100)  # Make the button square-shaped
             radio_button.clicked.connect(self.display_image)
             self.radio_buttons[mood] = radio_button
 
@@ -127,33 +167,48 @@ class MoodApp(QWidget):
         self.result_page = QWidget()
         self.result_layout = QVBoxLayout()
 
+        # Make the result page fill the entire screen
+        self.setWindowState(self.windowState() | Qt.WindowMaximized)
+
+        # Create a container layout for the content of the result page
+        self.result_content_layout = QVBoxLayout()
+
+        # Image label setup: Make it bigger and ensure image fits
         self.image_label = QLabel(self)
         self.image_label.setStyleSheet("border: 5px solid #2d2d2d; border-radius: 10px;")
-        self.result_layout.addWidget(self.image_label)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.result_content_layout.addWidget(self.image_label)
 
-        # Add a title for the fact
+        # Title for the fact
         self.fact_title_label = QLabel("Factou random per la cara :)", self)
-        self.fact_title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #2d2d2d; margin-top: 20px;")
-        self.result_layout.addWidget(self.fact_title_label)
+        self.fact_title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #2d2d2d; margin-top: 20px;")
+        self.fact_title_label.setAlignment(Qt.AlignCenter)
+        self.result_content_layout.addWidget(self.fact_title_label)
 
-        # Add a label for the fact
+        # Label for the fact text: Centered horizontally and increased size
         self.fact_label = QLabel(self)
-        self.fact_label.setStyleSheet("font-size: 18px; color: #2d2d2d; padding: 10px;")
+        self.fact_label.setStyleSheet("font-size: 24px; color: #2d2d2d; padding: 10px;")
         self.fact_label.setWordWrap(True)  # Enable word wrapping
-        self.result_layout.addWidget(self.fact_label)
+        self.fact_label.setAlignment(Qt.AlignCenter)  # Horizontally centered text
+        self.result_content_layout.addWidget(self.fact_label)
 
+        # Error message label
         self.error_label = QLabel(self)
         self.error_label.setStyleSheet("color: red; font-size: 14px; text-align: center;")
-        self.result_layout.addWidget(self.error_label)
+        self.result_content_layout.addWidget(self.error_label)
 
-        self.back_button = QPushButton("Back")
+        # Back button
+        self.back_button = QPushButton("<-- Tria un altre mood")
         self.back_button.setStyleSheet(""" 
-            font-size: 18px; padding: 10px 20px; background-color: #4CAF50; color: white;
+            font-size: 20px; padding: 15px 30px; background-color: #4CAF50; color: white;
             border-radius: 5px; border: none; margin-top: 20px; 
             text-align: center;
         """)
         self.back_button.clicked.connect(self.show_question_page)
-        self.result_layout.addWidget(self.back_button, alignment=Qt.AlignCenter)
+        self.result_content_layout.addWidget(self.back_button, alignment=Qt.AlignCenter)
+
+        # Add the content layout to the main result layout
+        self.result_layout.addLayout(self.result_content_layout)
 
         self.result_page.setLayout(self.result_layout)
 
@@ -173,14 +228,18 @@ class MoodApp(QWidget):
         if selected_mood and selected_mood in images:
             image_path = images[selected_mood]
             if os.path.exists(image_path):
+                # Open and resize the image
                 img = Image.open(image_path)
-                img = resize_image_to_max(img, 600, 600)  # Resize image
+                img = resize_image_to_max(img, 800, 800)  # Make the image bigger
 
-                # Adjust for the border by reducing the size slightly
+                # Convert the PIL image to QPixmap
                 img_qpixmap = QPixmap(image_path)
-                border_thickness = 5  # Border width (as per the style)
-                self.image_label.setPixmap(img_qpixmap.scaled(600 - 2 * border_thickness, 600 - 2 * border_thickness, Qt.KeepAspectRatio))
-                self.error_label.setText("")  # Clear any error messages
+
+                # Set the image to the label, without scaling it down for the border
+                self.image_label.setPixmap(img_qpixmap.scaled(800, 800, Qt.KeepAspectRatio))
+
+                # Clear any error messages
+                self.error_label.setText("")
 
                 # Get random fact and translate it to Spanish
                 fact = get_random_fact()
@@ -188,8 +247,9 @@ class MoodApp(QWidget):
                 # Set the fact label text (no need to set width now)
                 self.fact_label.setText(fact)
 
-                # The label will adjust its width automatically, but we ensure it doesn't stretch beyond image width
-                self.fact_label.setFixedWidth(600 - 2 * border_thickness)
+                # Apply the border separately without affecting the image size
+                self.image_label.setStyleSheet(
+                    "border: 10px solid #2d2d2d; border-radius: 10px;")  # Make border slightly thicker
 
                 self.stacked_widget.setCurrentIndex(1)  # Switch to the result page
             else:

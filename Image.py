@@ -21,7 +21,7 @@ def resource_path(relative_path):
 
 # Create a dictionary of options and their corresponding image paths
 images = {
-    "Happy": resource_path("Fotos/IMG_6031.JPEG"),
+    "Calamardo": resource_path("Fotos/7c027d88-799e-4ef3-8302-057db69e2f73.JPEG"),
     "Sad": resource_path("Fotos/IMG_6031.JPEG"),
     "Excited": resource_path("Fotos/IMG_6031.JPEG"),
 }

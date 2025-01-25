@@ -1,7 +1,7 @@
 import sys
 import os
 import requests
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QRadioButton, QPushButton, QStackedWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QGridLayout, QLabel, QRadioButton, QPushButton, QStackedWidget
 from PyQt5.QtGui import QPixmap, QColor, QPalette
 from PyQt5.QtCore import Qt
 from PIL import Image
@@ -19,12 +19,16 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-# Create a dictionary of options and their corresponding image paths
-images = {
-    "Calamardo": resource_path("Fotos/7c027d88-799e-4ef3-8302-057db69e2f73.JPEG"),
-    "Sad": resource_path("Fotos/IMG_6031.JPEG"),
-    "Excited": resource_path("Fotos/IMG_6031.JPEG"),
-}
+# Dynamically load all image filenames from the "Fotos" directory
+image_folder = resource_path("Fotos")
+images = {}
+
+for filename in os.listdir(image_folder):
+    if filename.lower().endswith(('.jpeg', '.jpg', '.png', '.gif')):
+        # Use the image filename (without extension) as the radio button label
+        mood_name = os.path.splitext(filename)[0]
+        images[mood_name] = resource_path(f"Fotos/{filename}")
+
 
 # Function to call the Free API to get a random fact
 def get_random_fact():
@@ -87,17 +91,34 @@ class MoodApp(QWidget):
         self.question_label.setAlignment(Qt.AlignCenter)
         self.question_layout.addWidget(self.question_label)
 
+
         # Create a container layout for the radio buttons (below the question)
-        self.radio_layout = QVBoxLayout()
+        self.radio_layout = QGridLayout()  # Use QGridLayout instead of QVBoxLayout
         self.radio_buttons = {}
 
+        # Number of columns for the grid layout (you can adjust this number to fit your needs)
+        columns = 3  # For example, this will try to create 3 columns
+
+        # Create radio buttons for each mood and add them to the grid layout
+        row = 0
+        col = 0
         for mood in images.keys():
             radio_button = QRadioButton(mood)
             radio_button.setStyleSheet("font-size: 20px; padding: 12px; margin: 10px; color: #2d2d2d;")
             radio_button.clicked.connect(self.display_image)
             self.radio_buttons[mood] = radio_button
-            self.radio_layout.addWidget(radio_button, alignment=Qt.AlignCenter)
 
+            # Add the radio button to the grid at the appropriate row and column
+            self.radio_layout.addWidget(radio_button, row, col)
+
+            # Move to the next column
+            col += 1
+            # If we've reached the max number of columns, move to the next row
+            if col >= columns:
+                col = 0
+                row += 1
+
+        # Add the grid layout of radio buttons to the question layout
         self.question_layout.addLayout(self.radio_layout)
 
         self.question_page.setLayout(self.question_layout)

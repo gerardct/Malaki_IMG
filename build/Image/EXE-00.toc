@@ -675,7 +675,7 @@
  [],
  False,
  False,
- 1737810408,
+ 1737816333,
  [('runw.exe',
    'C:\\Users\\gcast\\PycharmProjects\\Malaki\\.venv\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\runw.exe',
    'EXECUTABLE')],

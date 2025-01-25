@@ -1,10 +1,11 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QRadioButton, QPushButton, \
-    QStackedWidget
+import requests
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QRadioButton, QPushButton, QStackedWidget
 from PyQt5.QtGui import QPixmap, QColor, QPalette
 from PyQt5.QtCore import Qt
 from PIL import Image
+from googletrans import Translator
 
 
 # Helper function to get the resource path (works with PyInstaller)
@@ -24,6 +25,26 @@ images = {
     "Sad": resource_path("Fotos/IMG_6031.JPEG"),
     "Excited": resource_path("Fotos/IMG_6031.JPEG"),
 }
+
+# Function to call the Free API to get a random fact
+def get_random_fact():
+    try:
+        url = "https://uselessfacts.jsph.pl/random.json?language=en"  # Get the fact in English
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            response_data = response.json()
+            fact = response_data['text']
+
+            # Translate the fact to Spanish
+            translator = Translator()
+            fact_in_spanish = translator.translate(fact, src='en', dest='es').text
+
+            return fact_in_spanish
+        else:
+            return "Could not retrieve fact at this moment."
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 def resize_image_to_max(img, max_width, max_height):
@@ -89,12 +110,23 @@ class MoodApp(QWidget):
         self.image_label.setStyleSheet("border: 5px solid #2d2d2d; border-radius: 10px;")
         self.result_layout.addWidget(self.image_label)
 
+        # Add a title for the fact
+        self.fact_title_label = QLabel("Factou random per la cara :)", self)
+        self.fact_title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #2d2d2d; margin-top: 20px;")
+        self.result_layout.addWidget(self.fact_title_label)
+
+        # Add a label for the fact
+        self.fact_label = QLabel(self)
+        self.fact_label.setStyleSheet("font-size: 18px; color: #2d2d2d; padding: 10px;")
+        self.fact_label.setWordWrap(True)  # Enable word wrapping
+        self.result_layout.addWidget(self.fact_label)
+
         self.error_label = QLabel(self)
         self.error_label.setStyleSheet("color: red; font-size: 14px; text-align: center;")
         self.result_layout.addWidget(self.error_label)
 
         self.back_button = QPushButton("Back")
-        self.back_button.setStyleSheet("""
+        self.back_button.setStyleSheet(""" 
             font-size: 18px; padding: 10px 20px; background-color: #4CAF50; color: white;
             border-radius: 5px; border: none; margin-top: 20px; 
             text-align: center;
@@ -122,9 +154,22 @@ class MoodApp(QWidget):
             if os.path.exists(image_path):
                 img = Image.open(image_path)
                 img = resize_image_to_max(img, 600, 600)  # Resize image
+
+                # Adjust for the border by reducing the size slightly
                 img_qpixmap = QPixmap(image_path)
-                self.image_label.setPixmap(img_qpixmap.scaled(600, 600, Qt.KeepAspectRatio))
+                border_thickness = 5  # Border width (as per the style)
+                self.image_label.setPixmap(img_qpixmap.scaled(600 - 2 * border_thickness, 600 - 2 * border_thickness, Qt.KeepAspectRatio))
                 self.error_label.setText("")  # Clear any error messages
+
+                # Get random fact and translate it to Spanish
+                fact = get_random_fact()
+
+                # Set the fact label text (no need to set width now)
+                self.fact_label.setText(fact)
+
+                # The label will adjust its width automatically, but we ensure it doesn't stretch beyond image width
+                self.fact_label.setFixedWidth(600 - 2 * border_thickness)
+
                 self.stacked_widget.setCurrentIndex(1)  # Switch to the result page
             else:
                 self.error_label.setText("Image file not found!")

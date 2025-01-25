@@ -21,6 +21,30 @@ images = {
     "Excited": resource_path("Fotos/709C34D4-9F44-498B-989E-6EF514B05C43.JPEG"),
 }
 
+
+def resize_image_to_max(img, max_width, max_height):
+    # Get the current size of the image
+    width, height = img.size
+
+    # Calculate the ratio of the dimensions
+    aspect_ratio = width / height
+
+    # Determine new width and height that maintain the aspect ratio
+    if width > height:
+        # If the image is wider than tall, resize based on max_width
+        new_width = max_width
+        new_height = int(max_width / aspect_ratio)
+    else:
+        # If the image is taller than wide, resize based on max_height
+        new_height = max_height
+        new_width = int(max_height * aspect_ratio)
+
+    # Resize the image with the new dimensions
+    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+    return img
+
+
 # Function to display the selected image
 def display_image():
     selection = selection_var.get()
@@ -28,7 +52,7 @@ def display_image():
         image_path = images[selection]
         if os.path.exists(image_path):
             img = Image.open(image_path)
-            img = img.resize((400, 400))  # Resize for display
+            img = resize_image_to_max(img, 600, 600) # Resize for display
             img_tk = ImageTk.PhotoImage(img)
 
             # Update the image label

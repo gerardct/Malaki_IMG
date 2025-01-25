@@ -44,7 +44,7 @@ class MoodApp(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Mood Selector")
+        self.setWindowTitle("Naiarotis APP")
         self.setGeometry(100, 100, 600, 700)
 
         # Set background color

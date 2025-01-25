@@ -61,7 +61,7 @@ class MoodApp(QWidget):
         self.question_layout = QVBoxLayout()
 
         # Add the question label at the top
-        self.question_label = QLabel("Quin és el teu mood d'avui?", self)
+        self.question_label = QLabel("Quin és el teu mood malaki d'avui?", self)
         self.question_label.setStyleSheet("font-size: 24px; font-weight: bold; text-align: center; color: #2d2d2d;")
         self.question_label.setAlignment(Qt.AlignCenter)
         self.question_layout.addWidget(self.question_label)

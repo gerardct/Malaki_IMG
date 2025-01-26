@@ -1,7 +1,8 @@
 import sys
 import os
 import requests
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QGridLayout, QLabel, QRadioButton, QPushButton, QStackedWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QGridLayout, QLabel, QRadioButton, QPushButton, \
+    QStackedWidget, QSizePolicy
 from PyQt5.QtGui import QPixmap, QColor, QPalette
 from PyQt5.QtCore import Qt
 from PIL import Image
@@ -111,7 +112,7 @@ class MoodApp(QWidget):
         self.radio_buttons = {}
 
         # Number of columns for the grid layout (you can adjust this number to fit your needs)
-        columns = 3  # For example, this will try to create 3 columns
+        columns = 6  # For example, this will try to create 3 columns
 
         # Create radio buttons for each mood and add them to the grid layout
         row = 0
@@ -144,7 +145,7 @@ class MoodApp(QWidget):
                     border-color: #388E3C;  /* Darker green when selected */
                 }
             """)
-            radio_button.setFixedSize(400, 100)  # Make the button square-shaped
+            radio_button.setFixedSize(300, 60)  # Make the button square-shaped
             radio_button.clicked.connect(self.display_image)
             self.radio_buttons[mood] = radio_button
 
@@ -197,13 +198,24 @@ class MoodApp(QWidget):
         self.error_label.setStyleSheet("color: red; font-size: 14px; text-align: center;")
         self.result_content_layout.addWidget(self.error_label)
 
+        # Add a vertical spacer before the back button
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.result_content_layout.addWidget(spacer)
+
         # Back button
         self.back_button = QPushButton("<-- Tria un altre mood")
         self.back_button.setStyleSheet(""" 
-            font-size: 20px; padding: 15px 30px; background-color: #4CAF50; color: white;
-            border-radius: 5px; border: none; margin-top: 20px; 
+            font-size: 20px; 
+            padding: 10px 20px; 
+            background-color: #4CAF50; 
+            color: white;
+            border-radius: 5px; 
+            border: none; 
+            margin-top: 20px; 
             text-align: center;
         """)
+        self.back_button.setMaximumWidth(300)
         self.back_button.clicked.connect(self.show_question_page)
         self.result_content_layout.addWidget(self.back_button, alignment=Qt.AlignCenter)
 
@@ -228,34 +240,83 @@ class MoodApp(QWidget):
         if selected_mood and selected_mood in images:
             image_path = images[selected_mood]
             if os.path.exists(image_path):
-                # Open and resize the image
+                # Open and resize the image dynamically based on a consistent max size
                 img = Image.open(image_path)
-                img = resize_image_to_max(img, 800, 800)  # Make the image bigger
+                max_width = 600  # Fixed maximum width
+                max_height = 600  # Fixed maximum height
+                img = resize_image_to_max(img, max_width, max_height)
 
-                # Convert the PIL image to QPixmap
-                img_qpixmap = QPixmap(image_path)
-
-                # Set the image to the label, without scaling it down for the border
-                self.image_label.setPixmap(img_qpixmap.scaled(800, 800, Qt.KeepAspectRatio))
+                # Convert the resized image to QPixmap
+                img.save("temp_resized_image.png")  # Save the resized image temporarily
+                img_qpixmap = QPixmap("temp_resized_image.png")
+                self.image_label.setPixmap(img_qpixmap)
 
                 # Clear any error messages
                 self.error_label.setText("")
 
                 # Get random fact and translate it to Spanish
                 fact = get_random_fact()
-
-                # Set the fact label text (no need to set width now)
                 self.fact_label.setText(fact)
 
-                # Apply the border separately without affecting the image size
+                # Apply border styling
                 self.image_label.setStyleSheet(
-                    "border: 10px solid #2d2d2d; border-radius: 10px;")  # Make border slightly thicker
+                    "border: 10px solid #2d2d2d; border-radius: 10px;"
+                )
 
                 self.stacked_widget.setCurrentIndex(1)  # Switch to the result page
             else:
                 self.error_label.setText("Image file not found!")
         else:
             self.error_label.setText("Invalid selection!")
+
+    def setup_result_page(self):
+        """Set up the result page with the updated layout."""
+        self.result_layout = QVBoxLayout()
+
+        # Back button at the top-left corner
+        self.back_button = QPushButton("<-- Tria un altre mood")
+        self.back_button.setStyleSheet(""" 
+            font-size: 16px; 
+            padding: 5px 15px; 
+            background-color: #4CAF50; 
+            color: white;
+            border-radius: 5px; 
+            border: none; 
+        """)
+        self.back_button.setMaximumWidth(200)
+        self.back_button.clicked.connect(self.show_question_page)
+
+        # Back button container (to align it at the top-left)
+        back_button_layout = QVBoxLayout()
+        back_button_layout.addWidget(self.back_button, alignment=Qt.AlignLeft)
+        self.result_layout.addLayout(back_button_layout)
+
+        # Image label
+        self.image_label = QLabel(self)
+        self.image_label.setStyleSheet("border: 5px solid #2d2d2d; border-radius: 10px;")
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.result_layout.addWidget(self.image_label, alignment=Qt.AlignCenter)
+
+        # Fact title
+        self.fact_title_label = QLabel("Factou random per la cara :)", self)
+        self.fact_title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #2d2d2d;")
+        self.fact_title_label.setAlignment(Qt.AlignCenter)
+        self.result_layout.addWidget(self.fact_title_label)
+
+        # Fact label
+        self.fact_label = QLabel(self)
+        self.fact_label.setStyleSheet("font-size: 20px; color: #2d2d2d; padding: 10px;")
+        self.fact_label.setWordWrap(True)
+        self.fact_label.setAlignment(Qt.AlignCenter)
+        self.result_layout.addWidget(self.fact_label)
+
+        # Error label
+        self.error_label = QLabel(self)
+        self.error_label.setStyleSheet("color: red; font-size: 14px; text-align: center;")
+        self.result_layout.addWidget(self.error_label)
+
+        # Set layout
+        self.result_page.setLayout(self.result_layout)
 
     def show_question_page(self):
         self.stacked_widget.setCurrentIndex(0)  # Switch back to the question page
